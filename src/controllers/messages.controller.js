@@ -41,22 +41,39 @@ const listMessages = async (req, res) => {
 };
 
 // Like a message
+// Like a message
 const likeMessage = async (req, res) => {
   const { id } = req.params;
 
   try {
-    const message = await Message.findByIdAndUpdate(
-      id,
-      { $inc: { likes: 1 } },
-      { new: true }
-    );
+    const message = await Message.findById(id);
 
-    if (!message) return res.status(404).json({ message: "Message not found" });
+    if (!message) {
+      return res.status(404).json({ message: "Message not found" });
+    }
 
-    return res.status(200).json({ message: "Message liked successfully", message });
+    // Ensure likes field exists
+    if (typeof message.likes !== "number") {
+      message.likes = 0;
+    }
+
+    // Increment likes
+    message.likes += 1;
+
+    await message.save();
+
+    // Return clean data
+    return res.json({
+      _id: message._id,
+      text: message.text,
+      category: message.category,
+      likes: message.likes,
+      timestamp: message.createdAt
+    });
+
   } catch (error) {
     console.error("Error liking message:", error);
-    return res.status(500).json({ message: "Internal Server Error", error: error.message });
+    return res.status(500).json({ message: "Internal Server Error" });
   }
 };
 
