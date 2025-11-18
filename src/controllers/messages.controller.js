@@ -41,7 +41,6 @@ const listMessages = async (req, res) => {
 };
 
 // Like a message
-// Like a message
 const likeMessage = async (req, res) => {
   const { id } = req.params;
 
