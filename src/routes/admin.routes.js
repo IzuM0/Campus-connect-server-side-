@@ -1,23 +1,22 @@
 const express = require("express");
 const router = express.Router();
 
-const { 
-  login, 
-  forgotPassword, 
-  resetPassword, 
-  deleteMessage 
-} = require("../controllers/auth.controller");
+// Import admin controller functions
+const { login, getAdmins, createAdmin, updateAdmin, deleteAdmin } = require("../controllers/admin.controller");
 
-// Admin login
+
+// admin login 
 router.post("/login", login);
+// Get all admins
+router.get("/", getAdmins);
 
-// DELETE a message (Admin only)
-router.delete("/messages/:id", deleteMessage);
+// Create a new admin
+router.post("/", createAdmin);
 
-// Forgot password
-router.post("/forgot-password", forgotPassword);
+// Update an admin
+router.put("/:id", updateAdmin);
 
-// Reset password
-router.post("/reset-password/:token", resetPassword);
+// Delete an admin
+router.delete("/:id", deleteAdmin);
 
 module.exports = router;
