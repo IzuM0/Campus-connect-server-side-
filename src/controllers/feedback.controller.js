@@ -1,4 +1,4 @@
-const Feedback = require("../models/Feedback");
+const Feedback = require("../models/feedback");
 
 // Public: create new feedback
 const createFeedback = async (req, res) => {
