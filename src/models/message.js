@@ -1,32 +1,44 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
-const messageSchema = new mongoose.Schema(
-  {
-    text: { 
-      type: String, 
-      required: true, 
-      trim: true, 
-      maxlength: 1000 
-    },
-    author: { 
-      type: String, 
-      default: "Anonymous" 
-    },
-    likes: { 
-      type: Number, 
-      default: 0 
-    },
-    createdAt: { 
-      type: Date, 
-      default: Date.now 
-    },
-    updatedAt: { 
-      type: Date 
-    },
+const messageSchema = new mongoose.Schema({
+  text: {
+    type: String,
+    required: true,
+    trim: true,
+    maxlength: 500
   },
-  { timestamps: true } 
-);
+  category: {
+    type: String,
+    required: true,
+    enum: ['suggestion', 'complaint', 'appreciation', 'question'],
+    default: 'suggestion'
+  },
+  status: {
+    type: String,
+    enum: ['new', 'reviewed', 'resolved'],
+    default: 'new'
+  },
+  type: {
+    type: String,
+    default: 'public'
+  },
+  likes: {
+    type: Number,
+    default: 0
+  },
+  adminResponse: {
+    type: String,
+    default: ''
+  },
+  respondedAt: {
+    type: Date
+  },
+  respondedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Admin'
+  }
+}, {
+  timestamps: true // creates createdAt and updatedAt automatically
+});
 
-const Message = mongoose.model("Message", messageSchema);
-
-module.exports = Message;
+module.exports = mongoose.model('Message', messageSchema);

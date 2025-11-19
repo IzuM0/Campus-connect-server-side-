@@ -1,46 +1,49 @@
 const Message = require("../models/message");
 
-// Create a new message
+// Create a new message (Public)
 const createMessage = async (req, res) => {
-  const { text } = req.body;
+  const { text, category } = req.body;
 
-  // Validate input
   if (!text || text.trim() === "") {
-    return res.status(400).json({ message: "Text is required" });
+    return res.status(400).json({ message: "Message text is required" });
   }
 
   try {
-    const newMessage = new Message({ text });
+    const newMessage = new Message({ 
+      text: text.trim(),
+      category: category || 'suggestion',
+      status: 'new',
+      type: 'public',
+      likes: 0
+    });
+    
     await newMessage.save();
-    return res.status(201).json({ message: "Message created successfully", newMessage });
+    
+    // Return the created message
+    return res.status(201).json(newMessage);
+    
   } catch (error) {
     console.error("Error creating message:", error);
-    return res.status(500).json({ message: "Internal Server Error", error: error.message });
+    return res.status(500).json({ message: "Internal Server Error" });
   }
 };
 
-// List messages with simple pagination
+// List all messages (Public)
 const listMessages = async (req, res) => {
   try {
-    const page = Math.max(1, parseInt(req.query.page) || 1);
-    const limit = Math.min(50, parseInt(req.query.limit) || 20);
-    const skip = (page - 1) * limit;
-
-    const total = await Message.countDocuments();
     const messages = await Message.find()
       .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
       .lean();
 
-    return res.status(200).json({ page, limit, total, messages });
+    return res.status(200).json(messages);
+    
   } catch (error) {
     console.error("Error listing messages:", error);
-    return res.status(500).json({ message: "Internal Server Error", error: error.message });
+    return res.status(500).json({ message: "Internal Server Error" });
   }
 };
 
-// Like a message
+// Like a message (Public)
 const likeMessage = async (req, res) => {
   const { id } = req.params;
 
@@ -51,24 +54,10 @@ const likeMessage = async (req, res) => {
       return res.status(404).json({ message: "Message not found" });
     }
 
-    // Ensure likes field exists
-    if (typeof message.likes !== "number") {
-      message.likes = 0;
-    }
-
-    // Increment likes
     message.likes += 1;
-
     await message.save();
 
-    // Return clean data
-    return res.json({
-      _id: message._id,
-      text: message.text,
-      category: message.category,
-      likes: message.likes,
-      timestamp: message.createdAt
-    });
+    return res.json(message);
 
   } catch (error) {
     console.error("Error liking message:", error);
@@ -76,30 +65,34 @@ const likeMessage = async (req, res) => {
   }
 };
 
-// Update a message (admin)
+// Update a message (Admin only)
 const updateMessage = async (req, res) => {
   const { id } = req.params;
-  const updateData = req.body;
-
-  if (!updateData || Object.keys(updateData).length === 0) {
-    return res.status(400).json({ message: "Update data is required" });
-  }
-
-  updateData.updatedAt = Date.now();
+  const { status, adminResponse } = req.body;
 
   try {
+    const updateData = { updatedAt: Date.now() };
+    
+    if (status) updateData.status = status;
+    if (adminResponse) {
+      updateData.adminResponse = adminResponse;
+      updateData.respondedAt = new Date();
+      updateData.respondedBy = req.adminId; // From auth middleware
+    }
+
     const message = await Message.findByIdAndUpdate(id, updateData, { new: true });
 
     if (!message) return res.status(404).json({ message: "Message not found" });
 
-    return res.status(200).json({ message: "Message updated successfully", message });
+    return res.status(200).json(message);
+    
   } catch (error) {
     console.error("Error updating message:", error);
-    return res.status(500).json({ message: "Internal Server Error", error: error.message });
+    return res.status(500).json({ message: "Internal Server Error" });
   }
 };
 
-// Delete a message (admin)
+// Delete a message (Admin only)
 const deleteMessage = async (req, res) => {
   const { id } = req.params;
 
@@ -108,10 +101,11 @@ const deleteMessage = async (req, res) => {
 
     if (!message) return res.status(404).json({ message: "Message not found" });
 
-    return res.status(200).json({ message: "Message deleted successfully", id });
+    return res.status(200).json({ message: "Message deleted successfully" });
+    
   } catch (error) {
     console.error("Error deleting message:", error);
-    return res.status(500).json({ message: "Internal Server Error", error: error.message });
+    return res.status(500).json({ message: "Internal Server Error" });
   }
 };
 

@@ -1,22 +1,18 @@
-const express = require("express");
+// src/routes/admin.routes.js
+const express = require('express');
 const router = express.Router();
+const adminController = require('../controllers/admin.controller');
+const auth = require('../middleware/auth.middleware');
 
-// Import admin controller functions
-const { login, getAdmins, createAdmin, updateAdmin, deleteAdmin } = require("../controllers/admin.controller");
+// Public routes
+router.post('/login', adminController.login);
+router.post('/forgot-password', adminController.forgotPassword);
+router.post('/reset-password/:token', adminController.resetPassword);
 
-
-// admin login 
-router.post("/login", login);
-// Get all admins
-router.get("/", getAdmins);
-
-// Create a new admin
-router.post("/", createAdmin);
-
-// Update an admin
-router.put("/:id", updateAdmin);
-
-// Delete an admin
-router.delete("/:id", deleteAdmin);
+// Protected routes (require admin authentication)
+router.get('/admins', auth, adminController.getAdmins);
+router.post('/admins', auth, adminController.createAdmin);
+router.put('/admins/:id', auth, adminController.updateAdmin);
+router.delete('/admins/:id', auth, adminController.deleteAdmin);
 
 module.exports = router;

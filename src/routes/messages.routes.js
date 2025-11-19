@@ -1,21 +1,15 @@
 const express = require("express");
 const router = express.Router();
-const { 
-  createMessage, 
-  listMessages, 
-  likeMessage, 
-  updateMessage, 
-  deleteMessage 
-} = require("../controllers/messages.controller");
-const { authAdmin } = require("../middleware/auth.middleware");
+const messageController = require("../controllers/messages.controller"); 
+const auth = require("../middleware/auth.middleware"); 
 
 // Public routes
-router.get("/", listMessages);
-router.post("/", createMessage);
-router.post("/:id/like", likeMessage);
+router.get("/", messageController.listMessages);
+router.post("/", messageController.createMessage);
+router.post("/:id/like", messageController.likeMessage);
 
 // Admin routes
-router.put("/:id", authAdmin, updateMessage);
-router.delete("/:id", authAdmin, deleteMessage);
+router.put("/:id", auth, messageController.updateMessage);
+router.delete("/:id", auth, messageController.deleteMessage);
 
 module.exports = router;

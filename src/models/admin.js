@@ -1,31 +1,36 @@
-const mongoose = require("mongoose");
-const crypto = require("crypto");
+// src/models/admin.js
+const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 
-const adminSchema = new mongoose.Schema(
-  {
-    email: { type: String, required: true, unique: true },
-    passwordHash: { type: String, required: true },
-    role: { type: String, default: "admin" },
-
-    // Add these for password reset
-    resetPasswordToken: { type: String },
-    resetPasswordExpires: { type: Date }
+const adminSchema = new mongoose.Schema({
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    trim: true,
+    lowercase: true
   },
-  { timestamps: true }
-);
+  passwordHash: {
+    type: String,
+    required: true
+  },
+  role: {
+    type: String,
+    enum: ['admin', 'superadmin'],
+    default: 'admin'
+  },
+  resetPasswordToken: String,
+  resetPasswordExpires: Date
+}, {
+  timestamps: true
+});
 
-// Method to generate token
-adminSchema.methods.generatePasswordReset = function () {
-  const resetToken = crypto.randomBytes(32).toString("hex");
-
-  this.resetPasswordToken = crypto.createHash("sha256")
-    .update(resetToken)
-    .digest("hex");
-
-  this.resetPasswordExpires = Date.now() + 10 * 60 * 1000; // valid for 10 minutes
-
-  return resetToken;
+// Generate password reset token
+adminSchema.methods.generatePasswordReset = function() {
+  this.resetPasswordToken = crypto.randomBytes(20).toString('hex');
+  this.resetPasswordExpires = Date.now() + 3600000; // 1 hour
+  return this.resetPasswordToken;
 };
 
-const Admin = mongoose.model("Admin", adminSchema);
-module.exports = Admin;
+module.exports = mongoose.model('Admin', adminSchema);

@@ -7,10 +7,12 @@ const {
   getRecentFeedback,
   getFeedbackByCategory
 } = require("../controllers/dashboard.controller");
+const auth = require('../middleware/auth.middleware');
 
-// Routes
-router.get("/summary", getDashboardSummary);
-router.get("/recent-feedback", getRecentFeedback);
-router.get("/feedback-by-category", getFeedbackByCategory);
+
+// Protected dashboard routes
+router.get('/summary', auth, getDashboardSummary);
+router.get('/recent', auth, getRecentFeedback);
+router.get('/categories', auth, getFeedbackByCategory);
 
 module.exports = router;

@@ -1,26 +1,23 @@
-const Feedback = require("../models/feedback");
+const Message = require("../models/message");
 
-// Get summary metrics
+// Get summary metrics - SIMPLIFIED
 const getDashboardSummary = async (req, res) => {
   try {
-    const total = await Feedback.countDocuments();
-    const unread = await Feedback.countDocuments({ is_read: false });
-    const responded = await Feedback.countDocuments({ response: { $ne: null } });
+    const total = await Message.countDocuments();
+    const unread = await Message.countDocuments({ status: 'new' });
+    const responded = await Message.countDocuments({ 
+      $or: [
+        { status: 'reviewed' },
+        { status: 'resolved' }
+      ]
+    });
     const responseRate = total ? (responded / total) * 100 : 0;
-
-    // Average response time
-    const feedbacksWithResponse = await Feedback.find({ response: { $ne: null } });
-    const avgResponseTime =
-      feedbacksWithResponse.length > 0
-        ? feedbacksWithResponse.reduce((sum, f) => sum + (f.responded_at - f.date_submitted), 0) /
-          feedbacksWithResponse.length
-        : 0;
 
     res.json({
       total,
       unread,
       responseRate,
-      avgResponseTime, // in milliseconds; frontend can convert to hours/days
+      avgResponseTime: 0, // You can implement this later
     });
   } catch (err) {
     console.error(err);
@@ -31,8 +28,11 @@ const getDashboardSummary = async (req, res) => {
 // Get recent submissions
 const getRecentFeedback = async (req, res) => {
   try {
-    const feedbacks = await Feedback.find().sort({ date_submitted: -1 }).limit(10);
-    res.json(feedbacks);
+    const messages = await Message.find()
+      .sort({ createdAt: -1 })
+      .limit(10);
+    
+    res.json(messages);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
@@ -42,9 +42,15 @@ const getRecentFeedback = async (req, res) => {
 // Get feedback grouped by category
 const getFeedbackByCategory = async (req, res) => {
   try {
-    const categories = await Feedback.aggregate([
-      { $group: { _id: "$category", count: { $sum: 1 } } },
+    const categories = await Message.aggregate([
+      { 
+        $group: { 
+          _id: "$category", 
+          count: { $sum: 1 } 
+        } 
+      }
     ]);
+    
     res.json(categories);
   } catch (err) {
     console.error(err);
